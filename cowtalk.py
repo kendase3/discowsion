@@ -9,6 +9,8 @@ class CowtalkProtocol(LineReceiver):
     def __init__(self, users):
         self.users = users
         self.name = None
+        # the state determines how dataReceived is handled
+        # the exception is quit which overrides current state
         self.state = "GETNAME"
 
     def connectionMade(self):
