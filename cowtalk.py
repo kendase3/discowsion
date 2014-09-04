@@ -12,12 +12,14 @@ class CowtalkProtocol(LineReceiver):
         self.state = "GETNAME"
 
     def connectionMade(self):
-        self.sendLine("What's your name?")
+        self.sendLine("Detective at keyboard, please enter your name.")
 
     def connectionLost(self, reason):
         self.sendLine("Goodbye!")
         if self.users.has_key(self.name):
             del self.users[self.name]
+        for name, protocol in self.users.iteritems():
+            protocol.sendLine("%s has disconnected" % self.name)
 
     def dataReceived(self, line):
         # we don't want to evaluate the newline
@@ -36,6 +38,8 @@ class CowtalkProtocol(LineReceiver):
         if self.users.has_key(name):
             self.sendLine("Name taken, please choose another.")
             return
+        for other_name, protocol in self.users.iteritems():
+            protocol.sendLine("%s has connected!" % name)
         self.name = name
         self.users[name] = self
         self.state = "CHAT"
@@ -43,7 +47,7 @@ class CowtalkProtocol(LineReceiver):
 
     def handle_CHAT(self, message):
         message = self.cowtalkify(message)
-        message = "%s>\n%s" % (self.name, message)
+        message = "---%s---\n%s" % (self.name, message)
         for name, protocol in self.users.iteritems():
             if protocol != self:
                 protocol.sendLine(message)
@@ -65,5 +69,6 @@ class CowtalkFactory(Factory):
     def buildProtocol(self, addr):
         return CowtalkProtocol(self.users)
 
-reactor.listenTCP(8000, CowtalkFactory())
+# looks like a sideways M for MOOO
+reactor.listenTCP(3000, CowtalkFactory())
 reactor.run()
